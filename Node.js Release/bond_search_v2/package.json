@@ -5,8 +5,9 @@
   "homepage": "https://fir.icu/",
   "main": "index.js",
   "dependencies": {
+    "moment": "",
     "node-fetch": "^2.6.0",
-    "moment": ""
+    "puppeteer": "^5.5.0"
   },
   "scripts": {
     "start": "node index.js"

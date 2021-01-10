@@ -16,6 +16,7 @@
  * Last updated: 02.01.2021
  * 
  */
+const ratings = require('./ratings.json');
 
 start()
 
@@ -44,10 +45,10 @@ module.exports.start = start;
 async function MOEXsearchBonds() { //поиск облигаций по параметрам
     const YieldMore = 7 //Доходность больше этой цифры
     const YieldLess = 13 //Доходность меньше этой цифры
-    const PriceMore = 97 //Цена больше этой цифры
-    const PriceLess = 102 //Цена меньше этой цифры
-    const DurationMore = 3 //Дюрация больше этой цифры
-    const DurationLess = 15 //Дюрация меньше этой цифры
+    const PriceMore = 90 //Цена больше этой цифры
+    const PriceLess = 105 //Цена меньше этой цифры
+    const DurationMore = 6 //Дюрация больше этой цифры
+    const DurationLess = 36 //Дюрация меньше этой цифры
     const VolumeMore = 300 //Объем сделок в каждый из n дней, шт. больше этой цифры
     const conditions = `<li>${YieldMore}% < Доходность < ${YieldLess}%</li>
                         <li>${PriceMore}% < Цена < ${PriceLess}%</li>
@@ -55,7 +56,7 @@ async function MOEXsearchBonds() { //поиск облигаций по пара
                         <li>Объем сделок в каждый из 15 последних дней (c ${moment().subtract(15, 'days').format('DD.MM.YYYY')}) > ${VolumeMore} шт.</li>
                         <li>Поиск в Т0, Т+, Т+ (USD) - Основной режим - безадрес.</li>`
     var bonds = [
-        // ["BondName", "SECID", "BondPrice", "BondVolume", "BondYield", "BondDuration", "BondTax"],
+        // ["BondName", "SECID", "Rating", "BondPrice", "BondVolume", "BondYield", "BondDuration", "BondTax"],
     ]
     var count
     var log = `<li>Поиск начат ${new Date().toLocaleString("ru-RU")}.</li>`
@@ -78,6 +79,8 @@ async function MOEXsearchBonds() { //поиск облигаций по пара
             for (var i = 0; i <= count - 1; i++) {
                 BondName = json.securities.data[i][1].replace(/\"/g, '').replace(/\'/g, '')
                 SECID = json.securities.data[i][0]
+                ratingEntry = ratings[SECID];
+                BondRating = ratingEntry ? `${ratingEntry.rating}, ${ratingEntry.date}` : '-'
                 BondPrice = json.securities.data[i][2]
                 BondYield = json.marketdata.data[i][1]
                 BondDuration = Math.floor((json.marketdata.data[i][2] / 30) * 100) / 100 // кол-во оставшихся месяцев 
@@ -92,7 +95,7 @@ async function MOEXsearchBonds() { //поиск облигаций по пара
                     log += volume.log
                     if (volume.lowLiquid == 0) { // lowLiquid: 0 и 1 - переключатели. 1 - если за какой-то из дней оборот был меньше заданного
                         MonthsOfPayments = await MOEXsearchMonthsOfPayments(SECID)
-                        bonds.push([BondName, SECID, BondPrice, BondVolume, BondYield, BondDuration, MonthsOfPayments])
+                        bonds.push([BondName, SECID, BondRating, BondPrice, BondVolume, BondYield, BondDuration, MonthsOfPayments])
                         console.log('%s. Cтрока № %s: %s.', getFunctionName(), bonds.length, JSON.stringify(bonds[bonds.length - 1]))
                         log += '<li><b>Результат № ' + bonds.length + ': ' + JSON.stringify(bonds[bonds.length - 1]) + '.</b></li>'
                     }
@@ -271,6 +274,7 @@ async function HTMLgenerate(bonds, conditions, log) { //генерировани
 
                 data.addColumn('string', 'Полное наименование');
                 data.addColumn('string', 'Код ценной бумаги');
+                data.addColumn('string', 'Рейтинг');
                 data.addColumn('number', 'Цена, %');
                 data.addColumn('number', 'Объем сделок , шт.'); // с ${moment().subtract(15, 'days').format('DD.MM.YYYY')}
                 data.addColumn('number', 'Доходность');

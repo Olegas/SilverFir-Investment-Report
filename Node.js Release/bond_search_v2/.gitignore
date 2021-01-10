@@ -1,0 +1,4 @@
+.data
+package-lock.json
+ratings.json
+node_modules
